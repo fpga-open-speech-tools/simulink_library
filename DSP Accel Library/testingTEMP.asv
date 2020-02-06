@@ -1,0 +1,27 @@
+
+%% Before Running
+x_in = 0:0.001:3;
+
+tt = 0:length(x_in)-1;
+tt = tt./48000;
+
+simin = [tt',x_in'];
+stop_time = tt(end);
+
+%% After Running
+
+output = out.simout.Data(:);
+outputIdeal = sqrt(x_in);
+address = addr.Data(:);
+%address(2:1001,1) = address(1:1000,1);
+%address(:,1) = abs(31-address(:,1));
+%address_r = address(:,1).*2+address(:,2);
+figure(3); plot(x_in,address);
+title("Read addresses as a function of input");
+xlabel("Input");
+ylabel("Read Address");
+
+figure(2); plot(x_in,output);
+title("Output Data over Input, sqrt Function");
+xlabel("Input");
+ylabel("Read Address");
