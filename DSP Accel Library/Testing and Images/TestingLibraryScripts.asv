@@ -20,12 +20,12 @@
 clear; close all;
 tableFnParam = "log(xIn)";
 maxInput = 1;
-floorParam = 2^-12;
-errorParam = 0.001;
+floor_in_tab = 2^-12;
+error_cap_tab = 0.001;
 ERR_DIAG = true;
-nBitsParam = 4;
-mBitsParam = 5;
-IGOTTHIS = false;
+N_bits_tab = 4;
+M_bits_tab = 5;
+igotthis = false;
 W_bits = 32;
 F_bits = 28;
 
@@ -34,11 +34,11 @@ F_bits = 28;
 % max_error, ram_size, table_size 
 
 d = ceil(log2(maxInput));
-if(IGOTTHIS)
-    N_bits = nBitsParam;
-    M_bits = mBitsParam;
+if(igotthis)
+    N_bits = N_bits_tab;
+    M_bits = M_bits_tab;
 else
-    N_bits = ceil(log2(d-log2(floorParam)+1));
+    N_bits = ceil(log2(d-log2(floor_in_tab)+1));
     % M_bits needs to be defined later, as it must be just enough to meet
     % accuracy standards defined by user, with linear interpolation
     M_bits = 1; %this will be updated later as needed
@@ -114,10 +114,10 @@ while(repeatFlag)
     maxErr = max(abs(errorInter));
     
     %check while loop condition
-    if(IGOTTHIS) 
+    if(igotthis) 
         repeatFlag = false;
     else
-        if(maxErr <= errorParam)
+        if(maxErr <= error_cap_tab)
             repeatFlag = false;
             if(ERR_DIAG)
                 figure(1); 
@@ -128,9 +128,9 @@ while(repeatFlag)
             if(ERR_DIAG)
                 f = msgbox(sprintf('Err = %.2d, M_bits = %d', maxErr, M_bits),'Configuring PLUT','replace');
             end
-            if(maxErr > 8*errorParam)
+            if(maxErr > 8*error_cap_tab)
                 M_bits = M_bits+3;
-            elseif(maxErr > 4*errorParam)
+            elseif(maxErr > 4*error_cap_tab)
                 M_bits = M_bits+2;
             else
                 M_bits = M_bits+1;
