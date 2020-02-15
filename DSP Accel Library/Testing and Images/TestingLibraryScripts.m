@@ -33,86 +33,83 @@ F_bits = 28;
 % things to figure out: M_bits, N_bits, Min_val, X_in table, Y_out table,
 % max_error, ram_size, table_size 
 
-d = ceil(log2(maxInput));
+binaryOffset = ceil(log2(maxInput)); % used for binary tricks, as well as identifying input range
 if(IGOTTHIS)
     N_bits = nBitsParam;
     M_bits = mBitsParam;
 else
-    N_bits = ceil(log2(d-log2(floorParam)+1));
+    N_bits = ceil(log2(binaryOffset-log2(floorParam)+1));
     % M_bits needs to be defined later, as it must be just enough to meet
     % accuracy standards defined by user, with linear interpolation
     M_bits = 1; %this will be updated later as needed
-end;
+end
 
 repeatFlag = true;
 while(repeatFlag)
     % Define a N point log2 spaced range of inputs, from 2^(d-(2^N_bits -1)) to almost 2^(d+1), 
     % this effectively covers the user defined input range, down to a floor
     % value.
-    X_in = zeros(1, 2^(M_bits+N_bits));
+    xIn = zeros(1, 2^(M_bits+N_bits));
     addr = 1;
     for NShifts = 2^N_bits-1:-1:0
         for M = 0:2^M_bits - 1
-            X_in(addr) = 2^(d-NShifts) + M*2^(d-NShifts-M_bits);
+            xIn(addr) = 2^(binaryOffset-NShifts) + M*2^(binaryOffset-NShifts-M_bits);
             addr = addr+1;
         end
     end
 
     % use function to define output. note: function must contain input X_in
     % within the string to work properly, and the only output of the function
-    % must be Y_out.
-    Y_out = eval(tableFnParam);
+    % must be the table values.
+    tableInit = eval(tableFnParam);
 
-    ram_size = N_bits+M_bits;
-    Table_init = Y_out;
-    max_val = 2^d+ (2^M_bits -1)*2^(d-M_bits);
-    min_val = 2^(d-(2^N_bits-1));
+    RAM_SIZE = N_bits+M_bits;
+    maxVal = 2^binaryOffset+ (2^M_bits -1)*2^(binaryOffset-M_bits);
+    minVal = 2^(binaryOffset-(2^N_bits-1));
     %set_param(gcb,'MaskDisplay',"disp(sprintf('Programmable Look-up Table\nMemory Used = %d samples and coeffs\nClock Rate Needed = %d Hz', FIR_Uprate*2, Max_Rate)); port_label('input',1,'data'); port_label('input',2,'valid'); port_label('input',3,'Wr_Data'); port_label('input',4,'Wr_Addr'); port_label('input',5,'Wr_En'); port_label('output',1,'data'); port_label('output',2,'valid'); port_label('output',3,'RW_Dout');")
 
     %%%%%%%%%% check and identify error %%%%%%%%%%%
-    % Make some values for an "ideal" lookup table with log spaced points
-    X_in_Ideal = logspace(log10(min_val), log10(max_val), 2^(ram_size+2));
-    X_temp = X_in;
-    X_in = X_in_Ideal;
-    % identify the values of the function at X_in_Ideal
-    Y_out_Ideal = eval(tableFnParam);
+    % Define a set of test cases for the lookup table with log spaced points
+    xTest = logspace(log10(minVal), log10(maxVal), 2^(RAM_SIZE+2));
+    xTemp = xIn;
+    xIn = xTest;
+    % identify the values of the function at xTest
+    yTest = eval(tableFnParam);
 
-    % Get values for lookup table (already have X_in)
-    X_in = X_temp;
+    % move lookup table values back to xIn
+    xIn = xTemp;
 
-    % Find lookup addresses for each point in X_in_Ideal
-    x_addr = zeros(1,length(X_in_Ideal));
-    for it = 1:length(X_in_Ideal)
-        x_addr(it) = 2^ram_size;
-        X_Shift = X_in_Ideal(it);
-        while(X_Shift < X_in(x_addr(it)) && x_addr(it) ~= 1)
-            x_addr(it) = x_addr(it) - 1;
+    % Find lookup addresses for each point in xTest
+    addrTest = zeros(1,length(xTest));
+    for it = 1:length(xTest)
+        addrTest(it) = 2^RAM_SIZE;
+        while(xTest(it) < xIn(addrTest(it)) && addrTest(it) ~= 1)
+            addrTest(it) = addrTest(it) - 1;
         end
-        if(x_addr(it)==0)
-            x_addr(it) = 1;
+        if(addrTest(it)==0)
+            addrTest(it) = 1;
         end
     end
 
     % Check for any possible out of bounds errors (handled similarly in
     % hardware)
-    x_addr(x_addr == 2^ram_size) = 2^ram_size -1;
+    addrTest(addrTest == 2^RAM_SIZE) = 2^RAM_SIZE -1;
 
     % Get values for linear interpolation of X_in_Ideal
-    x_low  = X_in(x_addr);
-    x_high = X_in(x_addr+1);
+    xLow  = xIn(addrTest);
+    xHigh = xIn(addrTest+1);
 
 
-    y_low  = Y_out(x_addr);
-    y_high = Y_out(x_addr+1);
-    slope  = (y_high-y_low) ./ (x_high - x_low);
-    y_inter = slope.*(X_in_Ideal-x_low)+y_low;
+    yLow  = tableInit(addrTest);
+    yHigh = tableInit(addrTest+1);
+    slope  = (yHigh-yLow) ./ (xHigh - xLow);
+    yInter = slope.*(xTest-xLow)+yLow;
     % percent error: obt-exp / exp
     %errorFloor = (Y_out_Ideal-y_low)./Y_out_Ideal;
-    errorInter = (Y_out_Ideal-y_inter)./Y_out_Ideal;
+    errorInter = (yTest-yInter)./yTest;
     %maxFloorErr(ix) = 100*max(abs(errorFloor(ix, 2870:9839)));
     %maxInterErr(ix) = 100*max(abs(errorInter(ix, 2870:9839)));
     maxErr = max(abs(errorInter));
-    
     %check while loop condition
     if(IGOTTHIS) 
         repeatFlag = false;
@@ -121,8 +118,8 @@ while(repeatFlag)
             repeatFlag = false;
             if(ERR_DIAG)
                 figure(1); 
-                subplot(2,1,1); semilogx(X_in_Ideal,y_inter, X_in_Ideal,Y_out_Ideal,X_in,Y_out,'k*'); title('Output Values over Input Range'); xlabel('Inputs'); ylabel('Outputs'); legend('Interpolated','Ideal','Table Points');
-                subplot(2,1,2); semilogx(X_in_Ideal,100*errorInter); title('Error of Output over Input Range'); xlabel('Inputs'); ylabel('Percent Error');
+                subplot(2,1,1); semilogx(xTest,yInter, xTest,yTest,xIn,tableInit,'k*'); title('Output Values over Input Range'); xlabel('Inputs'); ylabel('Outputs'); legend('Interpolated','Ideal','Table Points');
+                subplot(2,1,2); semilogx(xTest,100*errorInter); title('Error of Output over Input Range'); xlabel('Inputs'); ylabel('Percent Error');
             end
         else
             if(ERR_DIAG)
@@ -145,5 +142,5 @@ end%end while loop
 % things to display: table size, floor input?, max input, accuracy
 
 % This line is uncommented for the mask script.
-%set_param(gcb,'MaskDisplay',"disp(sprintf('Programmable Look-Up Table\nMemory Used = %d fixed point numbers\nInput Bounds: %.2d <= x <= %.2d\n Maximum Error: %.2d %', 2^ram_size, min_val, max_val, 100*maxErr)); port_label('input',1,'Data_In'); port_label('input',2,'Table_Wr_Data'); port_label('input',3,'Table_Wr_Addr'); port_label('input',4,'Table_Wr_En'); port_label('output',1,'Data_Out'); port_label('output',2,'Table_RW_Dout');")
+set_param(gcb,'MaskDisplay',"disp(sprintf('Programmable Look-Up Table\nMemory Used = %d fixed point numbers\nInput Bounds: %.2d <= x <= %.2d\n Maximum Error: %.2d %', 2^RAM_SIZE, min_val, max_val, 100*maxErr)); port_label('input',1,'Data_In'); port_label('input',2,'Table_Wr_Data'); port_label('input',3,'Table_Wr_Addr'); port_label('input',4,'Table_Wr_En'); port_label('output',1,'Data_Out'); port_label('output',2,'Table_RW_Dout');")
 

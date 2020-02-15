@@ -1,22 +1,39 @@
-%% Linear Addressing Init Script Testing
+%% TESTING OF LINEAR PLUT INIT SCRIPTS
+%
+% This script is a copy of code used in the Linear Programmable Look-Up Table's
+% init script in the DSP_FPGA_Accelerated_Toolbox.
+
+% Copyright 2020 Flat Earth Inc
+%
+% THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+% INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+% PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+% FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+% ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+%
+% E. Bailey Galacci
+% Flat Earth Inc
+% 985 Technology Blvd
+% Bozeman, MT 59718
+% support@flatearthinc.com
+
 % Define mask inputs
 clear; close all;
 W_bits = 32;
 isSigned = true;
 F_bits = 28;
-N_bits = 5;
-error_cap_tab = .1;
+errorParam = .1;
 ERR_DIAG = true;
-igotthis = false;
-addr_w_manual = 4;
-TableFn = "X_in./5";
+IGOTTHIS = false;
+ADDR_W_MANUAL = 4;
+tableFnParam = "xIn./5";
 
 % things to display: table size, floor input?, max input, accuracy
 % things to figure out: M_bits, N_bits, Min_val, X_in table, Y_out table,
 % max_error, ram_size, table_size 
 
-if(igotthis)
-    N_bits = addr_w_manual;
+if(IGOTTHIS)
+    N_bits = ADDR_W_MANUAL;
 else
     N_bits = 4;
     % N_bits will likely need to be updated later, until table is large enough to meet
@@ -41,60 +58,58 @@ while(repeatFlag)
     % largest table input: 2^(W-1-F) - 2^(W-F-N), smallest number but positive
     % and minus 1 step size, "[ones(1,N)]"
     if(isSigned)
-        X_in = -2^(W_bits-1-F_bits) : 2^(W_bits-F_bits-N_bits) : 2^(W_bits-1-F_bits) - 2^(W_bits-F_bits-N_bits);
+        xIn = -2^(W_bits-1-F_bits) : 2^(W_bits-F_bits-N_bits) : 2^(W_bits-1-F_bits) - 2^(W_bits-F_bits-N_bits);
     else
-        X_in = 0 : 2^(W_bits-F_bits-N_bits) : 2^(W_bits-F_bits) - 2^(W_bits-F_bits-N_bits);
+        xIn = 0 : 2^(W_bits-F_bits-N_bits) : 2^(W_bits-F_bits) - 2^(W_bits-F_bits-N_bits);
     end
 
-    % use function to define output. note: function must contain input X_in
+    % use function to define output. note: function must contain input xIn
     % within the string to work properly, and the only output of the function
     % must be Y_out.
-    Y_out = eval(TableFn);
+    tableInit = eval(tableFnParam);
 
-    ram_size = N_bits;
-    Table_Init = Y_out;
-    figure(2); plot(X_in,Y_out, 'k*'); title('Table Initialized Function');
-    max_val = X_in(end);
-    min_val = X_in(1);
+    RAM_SIZE = N_bits;
+    figure(2); plot(xIn,tableInit, 'k*'); title('Table Initialized Function');
+    maxVal = xIn(end);
+    minVal = xIn(1);
     %set_param(gcb,'MaskDisplay',"disp(sprintf('Programmable Look-up Table\nMemory Used = %d samples and coeffs\nClock Rate Needed = %d Hz', FIR_Uprate*2, Max_Rate)); port_label('input',1,'data'); port_label('input',2,'valid'); port_label('input',3,'Wr_Data'); port_label('input',4,'Wr_Addr'); port_label('input',5,'Wr_En'); port_label('output',1,'data'); port_label('output',2,'valid'); port_label('output',3,'RW_Dout');")
 
     %%%%%%%%%% check and identify error %%%%%%%%%%%
     % Make some values for an "ideal" lookup table with lin spaced points
     if(isSigned)
-        X_in_Ideal = -2^(W_bits-1-F_bits) : 2^(W_bits-F_bits-N_bits-2) : 2^(W_bits-1-F_bits) - 2^(W_bits-F_bits-N_bits);
+        xTest = -2^(W_bits-1-F_bits) : 2^(W_bits-F_bits-N_bits-2) : 2^(W_bits-1-F_bits) - 2^(W_bits-F_bits-N_bits);
     else
-        X_in_Ideal = 0 : 2^(W_bits-F_bits-N_bits-2) : 2^(W_bits-F_bits) - 2^(W_bits-F_bits-N_bits);
+        xTest = 0 : 2^(W_bits-F_bits-N_bits-2) : 2^(W_bits-F_bits) - 2^(W_bits-F_bits-N_bits);
     end
-    X_temp = X_in;
-    X_in = X_in_Ideal;
-    % identify the values of the function at X_in_Ideal
-    Y_out_Ideal = eval(TableFn);
+    xTemp = xIn;
+    xIn = xTest;
+    % identify the values of the function at xTest
+    yTest = eval(tableFnParam);
 
-    % Get values for lookup table (already have X_in)
-    X_in = X_temp;
+    % Return table input set to xIn (already have xTemp)
+    xIn = xTemp;
 
-    % Find lookup addresses for each point in X_in_Ideal
-    x_addr = zeros(1,length(X_in_Ideal));
-    for it = 1:length(X_in_Ideal)
-        x_addr(it) = 2^ram_size;
-        X_Shift = X_in_Ideal(it);
-        while(X_Shift < X_in(x_addr(it)) && x_addr(it) ~= 1)
-            x_addr(it) = x_addr(it) - 1;
+    % Find lookup addresses for each point in xTest
+    addrTest = zeros(1,length(xTest));
+    for it = 1:length(xTest)
+        addrTest(it) = 2^RAM_SIZE;
+        while(xTest(it) < xIn(addrTest(it)) && addrTest(it) ~= 1)
+            addrTest(it) = addrTest(it) - 1;
         end
-        if(x_addr(it)==0)
-            x_addr(it) = 1;
+        if(addrTest(it)==0) %% sanity check for out of bounds results
+            addrTest(it) = 1;
         end
     end
     
-    y_floor = Y_out(x_addr);
+    yLow = tableInit(addrTest);
 
     % Check for any possible out of bounds errors (handled similarly in
     % hardware)
-    % x_addr(x_addr == 2^ram_size) = 2^ram_size -1;
+    addrTest(addrTest == 2^ram_size) = 2^ram_size -1;
 
     
     % absolute error: abs(obt-exp)
-    errorFloor = abs(Y_out_Ideal-y_floor);
+    errorFloor = abs(yTest-yLow);
     NAN_CLEANUP = isnan(errorFloor);
     errorFloor(NAN_CLEANUP) = 0;
     %errorInter = (Y_out_Ideal-y_inter)./Y_out_Ideal;
@@ -103,30 +118,30 @@ while(repeatFlag)
     maxErr = max(abs(errorFloor));
     
     %check while loop condition
-    if(igotthis) 
+    if(IGOTTHIS) 
         repeatFlag = false;
         if(ERR_DIAG)
             figure(1); 
-            subplot(2,1,1); plot(X_in_Ideal,y_floor, X_in_Ideal,Y_out_Ideal,X_in,Y_out,'k*'); title('Output Values over Input Range'); xlabel('Inputs'); ylabel('Outputs'); legend('Output','Ideal','Table Points');
-            subplot(2,1,2); plot(X_in_Ideal,errorFloor); title('Error of Output over Input Range'); xlabel('Inputs'); ylabel('Absolute Error');
+            subplot(2,1,1); plot(xTest,yLow, xTest,yTest,xIn,tableInit,'k*'); title('Output Values over Input Range'); xlabel('Inputs'); ylabel('Outputs'); legend('Output','Ideal','Table Points');
+            subplot(2,1,2); plot(xTest,errorFloor); title('Error of Output over Input Range'); xlabel('Inputs'); ylabel('Absolute Error');
         end
         break;
     end
     
-    if(maxErr <= error_cap_tab || N_bits > W_bits)
+    if(maxErr <= errorParam || N_bits > W_bits)
         repeatFlag = false;
         if(ERR_DIAG)
             figure(1); 
-            subplot(2,1,1); plot(X_in_Ideal,y_floor, X_in_Ideal,Y_out_Ideal,X_in,Y_out,'k*'); title('Output Values over Input Range'); xlabel('Inputs'); ylabel('Outputs'); legend('Output','Ideal','Table Points');
-            subplot(2,1,2); plot(X_in_Ideal,errorFloor); title('Error of Output over Input Range'); xlabel('Inputs'); ylabel('Absolute Error');
+            subplot(2,1,1); plot(xTest,yLow, xTest,yTest,xIn,tableInit,'k*'); title('Output Values over Input Range'); xlabel('Inputs'); ylabel('Outputs'); legend('Output','Ideal','Table Points');
+            subplot(2,1,2); plot(xTest,errorFloor); title('Error of Output over Input Range'); xlabel('Inputs'); ylabel('Absolute Error');
         end
     else
         if(ERR_DIAG)
             f = msgbox(sprintf('Err = %.2d, N_bits = %d', maxErr, N_bits),'Configuring PLUT','replace');
         end
-        if(maxErr > 8*error_cap_tab)
+        if(maxErr > 8*errorParam)
             N_bits = N_bits+3;
-        elseif(maxErr > 4*error_cap_tab)
+        elseif(maxErr > 4*errorParam)
             N_bits = N_bits+2;
         else
             N_bits = N_bits+1;
@@ -138,10 +153,10 @@ end%end while loop
 %maxInterErrTot = max(maxInterErr);
 %% things to display: table size, floor input?, max input, accuracy
 if(isSigned) % setup for 2's compliment
-    Table_Init = [Y_out(2^(N_bits-1)+1:end) , Y_out(1:2^(N_bits-1))];
+    tableInit = [tableInit(2^(N_bits-1)+1:end) , tableInit(1:2^(N_bits-1))];
 else
-    Table_Init = Y_out;
+    tableInit = tableInit;
 end
 
-%set_param(gcb,'MaskDisplay',"disp(sprintf('Programmable Look-Up Table\nMemory Used = %d fixed point numbers\nInput Bounds: %.2d <= x <= %.2d\n Maximum Error: %.2d', 2^ram_size, min_val, max_val, maxErr)); port_label('input',1,'Data_In'); port_label('input',2,'Table_Wr_Data'); port_label('input',3,'Table_Wr_Addr'); port_label('input',4,'Table_Wr_En'); port_label('output',1,'Data_Out'); port_label('output',2,'Table_RW_Dout');")
+set_param(gcb,'MaskDisplay',"disp(sprintf(['Programmable Look-Up Table\nMemory Used = %d fixed point numbers\n' tableFnParam '\n Maximum Error: %.2d'], 2^RAM_SIZE, maxErr)); port_label('input',1,'Data_In'); port_label('input',2,'Table_Wr_Data'); port_label('input',3,'Table_Wr_Addr'); port_label('input',4,'Table_Wr_En'); port_label('output',1,'Data_Out'); port_label('output',2,'Table_RW_Dout');")
 
