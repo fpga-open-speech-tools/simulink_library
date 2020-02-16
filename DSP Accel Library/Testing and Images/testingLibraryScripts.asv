@@ -18,35 +18,16 @@
 % support@flatearthinc.com
 
 clear; close all;
-tableFnParam = "xIn.^0.5";
+tableFnParam = "log(xIn)";
 maxInput = 1;
-floorParam = 2^-15;
-errorParam = 0.1;
+floorParam = 2^-12;
+errorParam = 0.001;
 ERR_DIAG = true;
 nBitsParam = 4;
 mBitsParam = 5;
 IGOTTHIS = false;
 W_bits = 32;
 F_bits = 28;
-
-%% PLUT INIT SCRIPT
-%
-% This script is a copy of code used in the Programmable Look-Up Table's
-% init script in the DSP_FPGA_Accelerated_Toolbox.
-
-% Copyright 2020 Flat Earth Inc
-%
-% THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
-% INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-% PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
-% FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-% ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-%
-% E. Bailey Galacci
-% Flat Earth Inc
-% 985 Technology Blvd
-% Bozeman, MT 59718
-% support@flatearthinc.com
 
 % things to display: table size, floor input?, max input, accuracy
 % things to figure out: M_bits, N_bits, Min_val, X_in table, Y_out table,
@@ -77,7 +58,7 @@ while(repeatFlag)
         end
     end
 
-    % use function to define output. note: function must contain input xIn
+    % use function to define output. note: function must contain input X_in
     % within the string to work properly, and the only output of the function
     % must be the table values.
     tableInit = eval(tableFnParam);
@@ -131,18 +112,20 @@ while(repeatFlag)
     if(IGOTTHIS) 
         repeatFlag = false;
     else
-        if(100*maxErr <= errorParam)
+        if(maxErr <= errorParam)
             repeatFlag = false;
+            if(ERR_DIAG)
+                figure(1); 
+                subplot(2,1,1); semilogx(xTest,yInter, xTest,yTest,xIn,tableInit,'k*'); title('Output Values over Input Range'); xlabel('Inputs'); ylabel('Outputs'); legend('Interpolated','Ideal','Table Points');
+                subplot(2,1,2); semilogx(xTest,100*errorInter); title('Error of Output over Input Range'); xlabel('Inputs'); ylabel('Percent Error');
+            end
         else
-%             if(ERR_DIAG)
-%                 f = msgbox(sprintf('Err = %.2d, M_bits = %d', 100*maxErr, M_bits),'Configuring PLUT','replace');
-%             end
-            
-            % make table larger to increase accuracy. M_bits can increase
-            % by more than 1 to save loops if error is far outside bounds
-            if(100*maxErr > 8*errorParam)
+            if(ERR_DIAG & ~repeatFlag)
+                f = msgbox(sprintf('Err = %.2d, M_bits = %d', maxErr, M_bits),'Configuring PLUT','replace');
+            end
+            if(maxErr > 8*errorParam)
                 M_bits = M_bits+3;
-            elseif(100*maxErr > 4*errorParam)
+            elseif(maxErr > 4*errorParam)
                 M_bits = M_bits+2;
             else
                 M_bits = M_bits+1;
@@ -150,13 +133,6 @@ while(repeatFlag)
         end
     end
 end%end while loop
-% prinout graph of table values and error test
-if(ERR_DIAG)
-    figure(1); 
-    f = msgbox(sprintf('Err = %.2d %%, Ram Size = %d bits  (2 by %d by %d)', 100*maxErr, 2*2^RAM_SIZE*W_bits, 2^RAM_SIZE, W_bits),'PLUT INIT','replace');
-    subplot(2,1,1); semilogx(xTest,yInter, xTest,yTest,xIn,tableInit,'k*'); title('Output Values over Input Range'); xlabel('Inputs'); ylabel('Outputs'); legend('Interpolated Results','Ideal','Table Points');
-    subplot(2,1,2); semilogx(xTest,100*errorInter); title('Error of Output over Input Range'); xlabel('Inputs'); ylabel('Percent Error');
-end
 
 % Some testing variables. Uncomment if desired.
 %maxFloorErrTot = max(maxFloorErr);
@@ -164,5 +140,5 @@ end
 % things to display: table size, floor input?, max input, accuracy
 
 % This line is uncommented for the mask script.
-%set_param(gcb,'MaskDisplay',"disp(sprintf(['Programmable Look-Up Table\nMemory Used: %d bits\n' tableFnParam ': %.2d <= x <= %.2d\n Maximum Error: %.2d %'], 2*2^RAM_SIZE*W_bits, minVal, maxVal, 100*maxErr)); port_label('input',1,'Data_In'); port_label('input',2,'Table_Wr_Data'); port_label('input',3,'Table_Wr_Addr'); port_label('input',4,'Table_Wr_En'); port_label('output',1,'Data_Out'); port_label('output',2,'Table_RW_Dout');")
+set_param(gcb,'MaskDisplay',"disp(sprintf('Programmable Look-Up Table\nMemory Used = %d fixed point numbers\nInput Bounds: %.2d <= x <= %.2d\n Maximum Error: %.2d %', 2^RAM_SIZE, min_val, max_val, 100*maxErr)); port_label('input',1,'Data_In'); port_label('input',2,'Table_Wr_Data'); port_label('input',3,'Table_Wr_Addr'); port_label('input',4,'Table_Wr_En'); port_label('output',1,'Data_Out'); port_label('output',2,'Table_RW_Dout');")
 

@@ -1,7 +1,15 @@
-%% TESTING OF LINEAR PLUT INIT SCRIPTS
-%
-% This script is a copy of code used in the Linear Programmable Look-Up Table's
-% init script in the DSP_FPGA_Accelerated_Toolbox.
+% Define mask inputs
+clear; close all;
+W_bits = 32;
+isSigned = true;
+F_bits = 28;
+errorParam = .1;
+ERR_DIAG = true;
+IGOTTHIS = false;
+ADDR_W_MANUAL = 4;
+tableFnParam = "sin(xIn)";
+
+%% LINEAR PLUT INIT SCRIPT
 
 % Copyright 2020 Flat Earth Inc
 %
@@ -17,20 +25,9 @@
 % Bozeman, MT 59718
 % support@flatearthinc.com
 
-% Define mask inputs
-clear; close all;
-W_bits = 32;
-isSigned = true;
-F_bits = 28;
-errorParam = .1;
-ERR_DIAG = true;
-IGOTTHIS = false;
-ADDR_W_MANUAL = 4;
-tableFnParam = "xIn./5";
-
 % things to display: table size, floor input?, max input, accuracy
 % things to figure out: M_bits, N_bits, Min_val, X_in table, Y_out table,
-% max_error, ram_size, table_size 
+% maxError, RAM_SIZE, table size 
 
 if(IGOTTHIS)
     N_bits = ADDR_W_MANUAL;
@@ -105,7 +102,7 @@ while(repeatFlag)
 
     % Check for any possible out of bounds errors (handled similarly in
     % hardware)
-    addrTest(addrTest == 2^ram_size) = 2^ram_size -1;
+    addrTest(addrTest == 2^RAM_SIZE) = 2^RAM_SIZE -1;
 
     
     % absolute error: abs(obt-exp)
@@ -120,43 +117,38 @@ while(repeatFlag)
     %check while loop condition
     if(IGOTTHIS) 
         repeatFlag = false;
-        if(ERR_DIAG)
-            figure(1); 
-            subplot(2,1,1); plot(xTest,yLow, xTest,yTest,xIn,tableInit,'k*'); title('Output Values over Input Range'); xlabel('Inputs'); ylabel('Outputs'); legend('Output','Ideal','Table Points');
-            subplot(2,1,2); plot(xTest,errorFloor); title('Error of Output over Input Range'); xlabel('Inputs'); ylabel('Absolute Error');
-        end
-        break;
     end
     
     if(maxErr <= errorParam || N_bits > W_bits)
         repeatFlag = false;
-        if(ERR_DIAG)
-            figure(1); 
-            subplot(2,1,1); plot(xTest,yLow, xTest,yTest,xIn,tableInit,'k*'); title('Output Values over Input Range'); xlabel('Inputs'); ylabel('Outputs'); legend('Output','Ideal','Table Points');
-            subplot(2,1,2); plot(xTest,errorFloor); title('Error of Output over Input Range'); xlabel('Inputs'); ylabel('Absolute Error');
-        end
     else
-        if(ERR_DIAG)
-            f = msgbox(sprintf('Err = %.2d, N_bits = %d', maxErr, N_bits),'Configuring PLUT','replace');
-        end
-        if(maxErr > 8*errorParam)
-            N_bits = N_bits+3;
-        elseif(maxErr > 4*errorParam)
-            N_bits = N_bits+2;
-        else
+%        if(ERR_DIAG)
+%            f = msgbox(sprintf('Err = %.2d, N_bits = %d', maxErr, N_bits),'Configuring PLUT','replace');
+%        end
+        
+        % make table larger to increase accuracy
+        if(maxErr > errorParam)
             N_bits = N_bits+1;
         end
     end
 end%end while loop
 
-%maxFloorErrTot = max(maxFloorErr);
-%maxInterErrTot = max(maxInterErr);
-%% things to display: table size, floor input?, max input, accuracy
+% printout graph of table values and error test
+% prinout graph of table values and error test
+if(ERR_DIAG)
+    figure(1); 
+    f = msgbox(sprintf('Err = +/- %.2d, Ram Size = %d bits  (%d by %d)', maxErr, 2^RAM_SIZE*W_bits, 2^RAM_SIZE, W_bits),'PLUT INIT','replace');
+    subplot(2,1,1); plot(xTest,yLow, xTest,yTest,xIn,tableInit,'k*'); title('Output Values over Input Range'); xlabel('Inputs'); ylabel('Outputs'); legend('Table Results','Ideal','Table Points');
+    subplot(2,1,2); plot(xTest, errorFloor); title('Error of Output over Input Range'); xlabel('Inputs'); ylabel('Absolute Error');
+end
+
+% things to display: table size, floor input?, max input, accuracy
 if(isSigned) % setup for 2's compliment
     tableInit = [tableInit(2^(N_bits-1)+1:end) , tableInit(1:2^(N_bits-1))];
 else
     tableInit = tableInit;
 end
 
-set_param(gcb,'MaskDisplay',"disp(sprintf(['Programmable Look-Up Table\nMemory Used = %d fixed point numbers\n' tableFnParam '\n Maximum Error: %.2d'], 2^RAM_SIZE, maxErr)); port_label('input',1,'Data_In'); port_label('input',2,'Table_Wr_Data'); port_label('input',3,'Table_Wr_Addr'); port_label('input',4,'Table_Wr_En'); port_label('output',1,'Data_Out'); port_label('output',2,'Table_RW_Dout');")
+% this line uncommented in the mask
+% set_param(gcb,'MaskDisplay',"disp(sprintf(['Programmable Look-Up Table\nMemory Used = %d bits \n' tableFnParam ': %d <= x <= %d \n Maximum Error: %.2d'], 2^RAM_SIZE*W_bits, minVal, maxVal, maxErr)); port_label('input',1,'Data_In'); port_label('input',2,'Table_Wr_Data'); port_label('input',3,'Table_Wr_Addr'); port_label('input',4,'Table_Wr_En'); port_label('output',1,'Data_Out'); port_label('output',2,'Table_RW_Dout');")
 
