@@ -9,12 +9,12 @@
 %  - Accuracy of results 
 % Reprogramming during runtime will be in a second script, PLUTtest2_reprogramming.m 
 
-% Instructions for setting up the simulation given in "Testing of the PLUT Instructions.docx"
+% Mask Parameters of PLUT block:
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Before Running Simulation %%
+%% Before Running Simulation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-clear; close all;
 % Run this section of code (ctrl + Enter) before running the simulation on testingPLUT.slx 
 % Define Simulation variables
 dataIn = 0:0.001:3;					% Input data range, note it includes 0 and goes beyond the upper "expected input" bound
@@ -31,13 +31,13 @@ stop_time = tt(end);
 
 % Now run the simulation, ensure fixed step time and ending time of stop_time 
 
-%%%%%%%%%%%%%%%%%%%
-%% After Running %%
-%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%
+%% After Running
+%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Pull information out of the simulation workspace and set it up for graphs and analysis 
 
-output = out.Data_Out.Data(:);
+output = out.simout.Data(:);
 outputIdeal = sqrt(dataIn);
 address = addr.Data(:);
 address(1:3000) = address(2:3001); % Simulation addresses take 1 sample of time to pipeline. This shifts them to line up with their respective inputs 
@@ -54,21 +54,21 @@ ylabel("Read Address");
 legend("Table Output", "Ideal Output");
 
 % Since expected inputs are bound between 2^-15 and 1, only consider the accuracy of points within that range 
-% allowed_in = (dataIn <= 1) && (dataIn >= 2^-15);
+% allowed_in = (x_in <= 1) && (x_in >= 2^-15);
 above = dataIn >= 2^-15;
 below = dataIn <= 1;
 valid = above & below;
 
 % identify addresses, outputs, and inputs associated with the expected input range 
-validAddr = address(valid);
-validOut = output(valid);
-validOutIdeal = outputIdeal(valid);
-validXIn = dataIn(valid);
+valid_addr = address(valid);
+valid_out = output(valid);
+valid_out_ideal = outputIdeal(valid);
+valid_x_in = dataIn(valid);
 
 % Identify error of those valid outputs 
-err = (validOutIdeal - validOut')./validOutIdeal;
+err = (valid_out_ideal - valid_out')./valid_out_ideal;
 max_err = max(err) % not ;'d to allow printout 
-figure(4); semilogx(validXIn, 100*err);
+figure(4); semilogx(valid_x_in, 100*err);
 title("Output Error as a function of Input");
 xlabel("Input");
 ylabel("Output Error %");
