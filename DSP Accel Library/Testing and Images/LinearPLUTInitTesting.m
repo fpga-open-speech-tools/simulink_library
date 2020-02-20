@@ -1,13 +1,13 @@
 % Define mask inputs
 clear; close all;
-W_bits = 32;
-isSigned = true;
-F_bits = 28;
-errorParam = .1;
-ERR_DIAG = true;
-IGOTTHIS = false;
-ADDR_W_MANUAL = 4;
-tableFnParam = "sin(xIn)";
+W_bits = 32;                % fixed-point word size
+isSigned = true;            % defines if table input is signed
+F_bits = 28;                % fixed-point fractional size
+errorParam = .1;            % allowed absolute error
+ERR_DIAG = true;            % flag to show table init
+IGOTTHIS = false;           % flag to manually define address width
+ADDR_W_MANUAL = 4;          % manually defined address width
+tableFnParam = "sin(xIn)";  % desired function
 
 %% LINEAR PLUT INIT SCRIPT
 
@@ -25,9 +25,9 @@ tableFnParam = "sin(xIn)";
 % Bozeman, MT 59718
 % support@flatearthinc.com
 
-% things to display: table size, floor input?, max input, accuracy
-% things to figure out: M_bits, N_bits, Min_val, X_in table, Y_out table,
-% maxError, RAM_SIZE, table size 
+% things to display: table size, input bounds, funtion represented, max error
+% things to figure out: N_bits, Min_val, X_in table, Y_out table, error
+% RAM_SIZE, table size 
 
 if(IGOTTHIS)
     N_bits = ADDR_W_MANUAL;

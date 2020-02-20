@@ -18,16 +18,17 @@
 % support@flatearthinc.com
 
 clear; close all;
-tableFnParam = "xIn.^0.5";
-maxInput = 1;
-floorParam = 2^-15;
-errorParam = 0.1;
-ERR_DIAG = true;
-nBitsParam = 4;
-mBitsParam = 5;
-IGOTTHIS = false;
-W_bits = 32;
-F_bits = 28;
+% User defined inputs to mask
+tableFnParam = "xIn.^0.5";      % desired function
+maxInput = 1;                   % highest expected input value
+floorParam = 2^-15;             % low threshold input value
+errorParam = 0.1;               % allowed % error of LUT
+ERR_DIAG = true;                % flag to show table init
+nBitsParam = 4;                 % manual setting of N_bits
+mBitsParam = 5;                 % manual setting of M_bits
+IGOTTHIS = false;               % flag for N/M manual override
+W_bits = 32;                    % fixed-point word size
+F_bits = 28;                    % fixed-point fractional size
 
 %% PLUT INIT SCRIPT
 %
@@ -48,7 +49,7 @@ F_bits = 28;
 % Bozeman, MT 59718
 % support@flatearthinc.com
 
-% things to display: table size, floor input?, max input, accuracy
+% things to display: table size, input bounds, function, accuracy
 % things to figure out: M_bits, N_bits, Min_val, X_in table, Y_out table,
 % max_error, ram_size, table_size 
 
@@ -103,7 +104,7 @@ while(repeatFlag)
     addrTest = zeros(1,length(xTest));
     for it = 1:length(xTest)
         addrTest(it) = 2^RAM_SIZE;
-        while(xTest(it) < xIn(addrTest(it)) && addrTest(it) ~= 1)
+        while(xTest(it) < xIn(addrTest(it)) && addrTest(it) ~= 1)   % find the address associated with an input value closest to and below xTest
             addrTest(it) = addrTest(it) - 1;
         end
         if(addrTest(it)==0)
@@ -118,11 +119,12 @@ while(repeatFlag)
     xLow  = xIn(addrTest);
     xHigh = xIn(addrTest+1);
 
-
+    % apply point-slope formula to preform linear interpolation for the table readout
     yLow  = tableInit(addrTest);
     yHigh = tableInit(addrTest+1);
     slope  = (yHigh-yLow) ./ (xHigh - xLow);
     yInter = slope.*(xTest-xLow)+yLow;
+    
     % percent error: obt-exp / exp
     %errorFloor = (yTest-yLow)./yTest;  % w/out linear interpolation
     errorInter = (yTest-yInter)./yTest; % w/ linear interpolation
@@ -161,7 +163,6 @@ end
 % Some testing variables. Uncomment if desired.
 %maxFloorErrTot = max(maxFloorErr);
 %maxInterErrTot = max(maxInterErr);
-% things to display: table size, floor input?, max input, accuracy
 
 % This line is uncommented for the mask script.
 %set_param(gcb,'MaskDisplay',"disp(sprintf(['Programmable Look-Up Table\nMemory Used: %d bits\n' tableFnParam ': %.2d <= x <= %.2d\n Maximum Error: %.2d %'], 2*2^RAM_SIZE*W_bits, minVal, maxVal, 100*maxErr)); port_label('input',1,'Data_In'); port_label('input',2,'Table_Wr_Data'); port_label('input',3,'Table_Wr_Addr'); port_label('input',4,'Table_Wr_En'); port_label('output',1,'Data_Out'); port_label('output',2,'Table_RW_Dout');")

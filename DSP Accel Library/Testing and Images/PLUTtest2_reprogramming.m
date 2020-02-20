@@ -59,9 +59,9 @@ stop_time = tt(end);
 
 % Now run the simulation, ensure fixed step time and ending time of stop_time 
 
-%%%%%%%%%%%%%%%%%%%
-%% After Running %%
-%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% After Running Simulation %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Pull information out of the simulation workspace and set it up for graphs and analysis 
 

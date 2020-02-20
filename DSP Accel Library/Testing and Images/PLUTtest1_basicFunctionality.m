@@ -31,22 +31,23 @@ stop_time = tt(end);
 
 % Now run the simulation, ensure fixed step time and ending time of stop_time 
 
-%%%%%%%%%%%%%%%%%%%
-%% After Running %%
-%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% After Running Simulation %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Pull information out of the simulation workspace and set it up for graphs and analysis 
-
+addrDelay = 1; 
 output = out.Data_Out.Data(:);
 outputIdeal = sqrt(dataIn);
 address = addr.Data(:);
-address(1:3000) = address(2:3001); % Simulation addresses take 1 sample of time to pipeline. This shifts them to line up with their respective inputs 
+address(1:end-addrDelay) = address(addrDelay+1:end); % Simulation addresses take 1 sample of time to pipeline. This shifts them to line up with their respective inputs 
 figure(3); plot(dataIn,address);
 title("Read addresses as a function of input (Time Corrected)");
 xlabel("Input");
 ylabel("Read Address");
 
-output(1:2998) = output(4:3001); % Simulation output takes 3 samples of time to pipeline. This shifts them to line up with their respective inputs 
+outputDelay = 3;
+output(1:end-outputDelay) = output(1+outputDelay:end); % Simulation output takes 3 samples of time to pipeline. This shifts them to line up with their respective inputs 
 figure(2); plot(dataIn,output, dataIn,outputIdeal);
 title("Output Data over Input, sqrt Function (Time Corrected)");
 xlabel("Input");
