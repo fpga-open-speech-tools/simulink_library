@@ -62,11 +62,13 @@ The amount of percent error allowed by the table. Used by the init script to ide
 *--Show Error Calculation--*
 When asserted, the block will pop-up graphs showing the error calculation and a pop-up detailing the amount of memory used, size of the RAM allocated, and maximum error.
 
+*--Show Table Init Plot:--*
+   When asserted, the block will show a figure of the table's initialized values.
+	
 *--Define Address Space Manually Tab--*
  - N_bits: Only used when Manual Bit Definition Override is asserted.
-	The width of the address dedicated to breadth of valid data. Increasing this will cause the table to 		 					recognize smaller numbers (by increasing the size of the Leading Zero Counter's output)  at the cost of memory used, and more logic required in the LZC. 
- - M_bits: Only used when Manual Bit Definition Override is asserted.
-    The width of the address dedicated to depth of valid data. Increasing this will cause more bits of the      	input to be considered as part of the address after the Leading Zero Counter, increasing precision at the cost of memory.
+    The width of the address dedicated to breadth of valid data. Increasing this will cause the table to recognize smaller numbers (by increasing the size of the Leading Zero Counter's output)  at the cost of memory used, and more logic required in the LZC. 
+ - M_bits: Only used when Manual Bit Definition Override is asserted. The width of the address dedicated to depth of valid data. Increasing this will cause more bits of the input to be considered as part of the address after the Leading Zero Counter, increasing precision at the cost of memory.
 
   *--Manual Bit Definition Override--*
 Checking this box will skip automatic size definition of Leading Zero Counter and precision bit size. Use with caution, as percent error will not be guaranteed with this setting on. Read the formal documentation for more details, kept within the file structure this library is stored in.
