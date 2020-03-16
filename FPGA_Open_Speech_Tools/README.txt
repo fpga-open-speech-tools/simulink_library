@@ -70,8 +70,11 @@ Save Table Input/Output set as .mat
     The amount of percent error allowed by the table. Used by the init script to identify the size of the table required to meet this parameter. This is found by testing a set of examples 4 times larger than the table set, therefore it is possible on rare occasion for some points to exceed this error. Decreasing this will increase the memory required for the table, but increase precision. 
 
   Show Error Calculation:
-    When asserted, the block will pop-up graphs showing the error calculation and a pop-up detailing the amount of memory used, size of the RAM allocated, and maximum error.
+    When asserted, the block will show a figure of the error calculation and a pop-up detailing the amount of memory used, size of the RAM allocated, and maximum error.
 
+  Show Table Init Plot: 
+    When asserted, the block will show a figure of the table's initialized values.
+	
 --Define Address Space Manually Tab--
   N_bits:
     Only used when Manual Bit Definition Override is asserted.
