@@ -1,3 +1,4 @@
+
 # FPGA Open Speech Tools -- DSP FPGA Accelerated Toolbox
 Copyright 2020 Flat Earth Inc
 
@@ -42,38 +43,39 @@ Capable of automatically determining required table size to meet a given accurac
 
 ### Mask Parameters 
 This section goes over a detailed description of the mask parameters when configuring the PLUT block. 
-#### Table Represented Function:
+
+- Table Represented Function:
 Function to estimate using the lookup table. Must contain the variable "X_in" as an input to a function, or as a variable within the executable code string, as this is used in the Initialization code to evaluate the function. If a function, that function must also have a single output which will define the values to fill the table with given input value X_in.
 
-#### Save Table Input/Output set as .mat
+- Save Table Input/Output set as .mat
 If asserted, the table's inputs and outputs will be saved in a .mat file named "<path name>_init.mat". By loading this, it is possible to see all precalculated points of the look-up table. This is especially useful when trying to reprogram the table, as all input points are shown along with their associated addresses.
 
 #### Table Parameters
-  *--Maximum Input Value--*  
+- Maximum Input Value
   The maximum input value the table should be expected to represent. If the input value is greater than this parameter's nearest higher power of 2, the table will output the value for the highest input.
 
-*--Define Input Threshold and Accuracy Tab--*
-Minimum Input Threshold: 
+#### Define Input Threshold and Accuracy Tab
+- Minimum Input Threshold: 
 The minimum input to recognize by the table. If the input value is less than this parameter's the nearest lower power of 2, the table will output the value for the lowest input.
 
-*--Maximum Allowed Error (%)--*
+- Maximum Allowed Error (%)
 The amount of percent error allowed by the table. Used by the init script to identify the size of the table required to meet this parameter. This is found by testing a set of examples 4 times larger than the table set, therefore it is possible on rare occasion for some points to exceed this error. Decreasing this will increase the memory required for the table, but increase precision. 
 
-*--Show Error Calculation--*
+- Show Error Calculation
 When asserted, the block will pop-up graphs showing the error calculation and a pop-up detailing the amount of memory used, size of the RAM allocated, and maximum error.
 
-*--Show Table Init Plot:--*
+- Show Table Init Plot:
    When asserted, the block will show a figure of the table's initialized values.
 	
-*--Define Address Space Manually Tab--*
+#### Define Address Space Manually Tab
  - N_bits: Only used when Manual Bit Definition Override is asserted.
     The width of the address dedicated to breadth of valid data. Increasing this will cause the table to recognize smaller numbers (by increasing the size of the Leading Zero Counter's output)  at the cost of memory used, and more logic required in the LZC. 
  - M_bits: Only used when Manual Bit Definition Override is asserted. The width of the address dedicated to depth of valid data. Increasing this will cause more bits of the input to be considered as part of the address after the Leading Zero Counter, increasing precision at the cost of memory.
 
-  *--Manual Bit Definition Override--*
+#### Manual Bit Definition Override
 Checking this box will skip automatic size definition of Leading Zero Counter and precision bit size. Use with caution, as percent error will not be guaranteed with this setting on. Read the formal documentation for more details, kept within the file structure this library is stored in.
 
-*--Data Parameters dropdown--*
+#### Data Parameters dropdown
 
  - Word Bits: Size of fixed point word of both the input signal and table memory.
 
@@ -82,35 +84,110 @@ Checking this box will skip automatic size definition of Leading Zero Counter an
 
 ### Block I/O
 This section describes the inputs and outputs of the PLUT mask to be used in a Simulink model.
-#### INPUTS: 
+#### Inputs: 
 
-*--Data_In--*
+- Data_In
   Input signal to be looked-up. Expected size fixdt(0,Word Bits, Fractional Bits).
 
-*--Table_Wr_Data-- % Table Write Data*
+- Table_Wr_Data % Table Write Data
 Data to write to the table, in location Table_RW_Addr, when Table_Wr_En is asserted. Expected size fixdt(0,Word Bits, Fractional Bits).
 
-*--Table_RW_Addr-- % Table Read/Write Address*
+- Table_RW_Addr % Table Read/Write Address
 The location within the table to read or overwrite. Expected size changes based on the function and allowed error as initialized, and is shown on the Mask Label as RAM Width, or by checking the "Show Error Calculation" button as RAM Width. 
   
 There is an internal check that will correct a signal of the wrong size to the correct address size, but it may be useful to know the X values associated with table output at any given address. Using the "Save Table Input/Output as .mat" option will   save the entire set of initialized inputs and outputs along with their associated addresses.
 
 For a full explanation on how xIn is derived, see the formal documentation contained within the file structure this library is stored in.
 
-*--Table_Wr_En-- % Table Write Enable*
+- Table_Wr_En % Table Write Enable
   Boolean. If this line is asserted, address Table_RW_Addr will be overwritten with data Table_Wr_Data. 
 
 
-#### OUTPUTS: 
-*--Data_Out--* 
+#### Outputs: 
+- Data_Out
   Output data of the table. Size fixdt(1,Word Bits, Fractional Bits).
 
-*--Table_RW_Dout-- % Table Read/Write Data Out*
+- Table_RW_Dout % Table Read/Write Data Out
   Outputs the data currently within address Table_RW_Addr (after writing if Table_Wr_En is asserted).
 
 
 ## Programmable Look-Up Table, Linear Scale
+A hardware-oriented implementation of a lookup table. Provides a fairly resource efficient way to avoid hardware-difficult operations, such as logarithms or square roots. 
 
+Tables can be initialized on system startup and rewritten during runtime using the Table_Wr lines. 
+
+Capable of automatically determining required table size to meet a given accuracy requirement within the entire data range, or can be manually set to a specific size with N_bits. Data Range is determined by the word size and fractional bit size of data entering the PLUT.
+
+### Mask Parameters 
+
+
+*Table Represented Function:*
+  Function to estimate using the lookup table. Must contain the variable "X_in" as an input to a function, or as a variable within the executable code string, as this is used in the Initialization code to evaluate the function. If a function, that function must also have a single output which will define the values to fill the table with given input value X_in.
+
+Save Table Input/Output set as .mat
+  If asserted, the table's inputs and outputs will be saved in a .mat file named "<path name>_init.mat". By loading this, it is possible to see all precalculated points of the look-up table. This is especially useful when trying to reprogram the table, as all input points are shown along with their associated addresses.
+
+#### Table Parameters
+  - Maximum Input Value: 
+    The maximum input value the table should be expected to represent. This is based on the data range of the fixed point word size and fractional size, and adjusted if the data is signed.
+
+#### Define Input Range and Accuracy Tab
+  Maximum Allowed Error (+/-):
+    The amount of absolute error allowed by the table. Used by the init script to identify the size of the table required to meet this parameter. This is found by testing a set of examples 4 times larger than the table set, therefore it is possible on rare occasion for some points to exceed this error. Decreasing this will increase the memory required for the table, but increase precision. 
+
+  - Show Error Calculation:
+    When asserted, the block will show a figure of the error calculation and a pop-up detailing the amount of memory used, size of the RAM allocated, and maximum error.
+
+  - Show Table Init Plot: 
+    When asserted, the block will show a figure of the table's initialized values.
+ 
+- Define Address Space Manually Tab
+  Address Width:
+    Only used when Manual Bit Definition Override is asserted.
+    The width of the address dedicated to depth of valid data.  Increasing this will cause more bits of the input to be considered as part of the address, increasing precision at the cost of memory.
+
+- Manual Bit Definition Override:
+    Checking this box will skip automatic size definition of precision bit size. Use with caution, as absolute error will not be guaranteed with this setting on. Read the formal documentation for more details, kept within the file structure this library is stored in.
+
+
+#### Data Parameters dropdown
+- Word Bits: 
+  Size of fixed point word of both the input signal and table memory.
+
+- Fractional Bits:
+  Number of fractional bits in the fixed point word of both the input signal and table memory.
+
+- Data Signed:
+  Check if data is signed. Adjusts table's values and readout if data is signed.
+
+
+### Block I/O
+
+#### Inputs: 
+
+- Data_In: 
+   Input signal to be looked-up. Expected size fixdt(isSigned,Word Bits, Fractional Bits).
+
+- Table_Wr_Data % Table Write Data:
+  Data to write to the table, in location Table_RW_Addr, when Table_Wr_En is asserted. Expected size fixdt(isSigned,Word Bits, Fractional Bits).
+
+- Table_RW_Addr % Table Read/Write Address:
+  The location within the table to read or overwrite. Expected size changes based on the function and allowed error as initialized, and is shown on the Mask Label as RAM Width, or by checking the "Show Error Calculation" button as RAM Width. 
+  
+  There is an internal check that will correct a signal of the wrong size to the correct address size, but it may be useful to know the X values associated with table output at any given address. Using the "Save Table Input/Output as .mat" option will save the entire set of initialized inputs and outputs along with their associated addresses.
+  
+  For a full explanation on how xIn is derived, see the formal documentation contained within the file structure this library is stored in.
+
+- Table_Wr_En % Table Write Enable:
+  Boolean. If this line is asserted, address Table_RW_Addr will be overwritten with data Table_Wr_Data. 
+
+
+#### Outputs: 
+- Data_Out:
+  Output data of the table. Size fixdt(isSigned,Word Bits, Fractional Bits).
+
+- Table_RW_Dout % Table Read/Write Data Out:
+  Outputs the data currently within address Table_RW_Addr (after writing if Table_Wr_En is asserted). Size fixdt(isSigned, Word Bits, Fractional Bits).
 
 ## Static Upclocked FIR 
 
@@ -127,40 +204,41 @@ B_k's can be ready using the Wr_Addr, Wr_En set to 0, sent out to the RW_Dout li
 ### Mask Parameters 
 Defined mask parameters for a user to configure when using the PFIR library block within a Simulink model.
 
-*--B_k coefficients:--*
+- B_k coefficients:
   FIR filter coefficients. Recommended to use filter sizes by powers of 2. 
-*--Sample Time:--*
+- Sample Time:
   Amount of time between valid pulses, when the input signal needs to be recognized.
-*--System Time:--*
+- System Time:
   Amount of time between system clock cycles. Can be the same as Sample Time if Valid_in is always 1.
-*--Added Delay:--*
+- Added Delay:
   Adds a N-sample delay to the output. Check Documentation Description for details.
-*--Fixed Point Word/Frac Size:--*
+- Fixed Point Word/Frac Size:
   Word and Fractional bit size of input and table data type. Data input and b_k's are assumed to be the same data type.
 
 ### Block I/O
 This section allows the user to drive the Simulink library blocks with input source signals and route the output signals. 
 #### Inputs
 Block input descriptions below. 
-*--Data_in:--* 
+- Data_in:
   Input signal to be processed. Can be of any rate a direct multiple of "Sample rate". Signed Fixed Point of size "Fixed Point Word Size".
-*--Valid_in:--*
+- Valid_in:
  Trigger to show input signal should be written to signal memory of FIR RAM. Active high. Boolean.
-*--Wr_Data:--*
+- Wr_Data:
   Data to write to B_k at address Wr_Addr if Wr_En is set to 1. Data type overwritten to match input signal type.
-*--Wr_Addr:--*
+- Wr_Addr:
   Location in table to write or read B_k table. Starts at 0 and ends at 2^N, where N is ceil(log2(length(B_k+Added_Delay)));
-*--Wr_En:--*
+- Wr_En:
   Used to set behavior to read or write from b_k memory.
   Write: 1, Read: 0
 
 #### Outputs
 Block output descriptions below. 
-*--Data_out:--*
+
+- Data_out:
   Output signal after processing. Set to sample time "System Time". Signed Fixed Point of size "Fixed Point Word Size". Zero-order hold.
-*--Valid_out:--*
+- Valid_out:
   Signal identifying when the output is a new processed value. Active high. Boolean.
-*--RW_Dout:--*
+- RW_Dout:
   Returns the value stored in Wr_Addr, after a 1 System clock cycle delay.
 ## Circular Buffer, Variable Delay 
 
