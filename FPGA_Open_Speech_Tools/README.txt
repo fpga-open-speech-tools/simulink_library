@@ -190,6 +190,39 @@ Save Table Input/Output set as .mat
   Outputs the data currently within address Table_RW_Addr (after writing if Table_Wr_En is asserted). Size fixdt(isSigned, Word Bits, Fractional Bits).
 
 ## Static Upclocked FIR 
+This block is designed for a hardware implementation of an FIR filter. The main advantage is resource sharing by using a single multiply/add at an increased clock rate to multiply the b_k coefficients and sum the results.
+
+The cost is a slightly increased amount of RAM used and the requirement that the system can run at data_rate*b_k_length, where b_k_length is rounded up to the nearest power of 2. The gains over a traditional FIR are a vastly decreased latency and logic resource usage.
+
+An "Added Delay" option is included as a way to save resources when delaying the filtered signal. The b_k RAM is padded with zeros to round length up to a power of 2. Therefore, many faster cycles are completely unnecessary. Since many b_k's are 0, they can be rotated to align with inputs starting before the most recent, effectively delaying the output signal with 0 extra resources used. Useful for things like realigning a signal after multi-channel processing, or any other reason to delay the signal. If Added Delay would cause rotation to read from undesired coefficients (not 0), on startup the system will automatically increase the size of the table. This doubles the RAM used, so if using a b_k length at or near a power of 2, or if a very long delay is required, this may not be the most efficient option.
+
+B_k's are defined on system start-up and *cannot be changed during runtime*.
+
+### Mask Parameters
+Configurable mask parameters:
+- B_k coefficients:
+  FIR filter coefficients
+- Sample Time:
+  Amount of time between valid pulses, when the input signal needs to be recognized.
+- System Time:
+  Amount of time between system clock cycles. Can be the same as Sample Time if Valid_in is always 1.
+- Added Delay:
+  Adds a N-sample delay to the output. Check Documentation Description for details.
+- Fixed Point Word/Frac Size:
+  Word and Fractional bit size of input and table data type. Data input and b_k's are assumed to be the same data type.
+
+### Block I/O
+Signal routing block IO descriptions:
+- Data_in: 
+  Input signal to be processed. Can be of any rate a direct multiple of "Sample rate". Signed Fixed Point of size "Fixed Point Word Size".
+- Valid_in: 
+ Trigger to show input signal should be written to signal memory of FIR RAM. Active high. Boolean.
+
+- Data_out:
+  Output signal after processing. Set to sample time "System Time". Signed Fixed Point of size "Fixed
+Point Word Size". Zero-order hold.
+- Valid_out: 
+  Signal identifying when the output is a new processed value. Active high. Boolean.
 
 
 ## Programmable Upclocked FIR 
