@@ -274,7 +274,7 @@ Block output descriptions below.
 - RW_Dout:
   Returns the value stored in Wr_Addr, after a 1 System clock cycle delay.
   
-## Circular Buffer, Variable Delay 
+## Variable Delay Block
 A hardware-oriented implementation of a variable delay.
 Provides a zero-latency selection of data history, where delay is an input port.
 
