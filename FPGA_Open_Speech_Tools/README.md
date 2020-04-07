@@ -273,5 +273,47 @@ Block output descriptions below.
   Signal identifying when the output is a new processed value. Active high. Boolean.
 - RW_Dout:
   Returns the value stored in Wr_Addr, after a 1 System clock cycle delay.
+
 ## Circular Buffer, Variable Delay 
 
+=======
+  
+## Variable Delay Block
+A hardware-oriented implementation of a variable delay.
+Provides a zero-latency selection of data history, where delay is an input port.
+
+The display shows Delay input signal width, as well as the maximum delay supported by the user's parameters.
+
+### Mask Parameters 
+
+- Maximum Delay 
+  Defines the maxmimum delay required by the user.
+  Actual maximum delay (shown on the front) will be 2^N -1, where N = ceil(log2(maxDelay+1));
+  This is for implementation reasons. 
+  
+### Block I/O
+This section allows the user to drive the Simulink library blocks with input source signals and route the output signals. 
+
+#### Inputs: 
+Block input descriptions below.
+- Data_In: 
+  Input signal. Size is automatically read during simulation or code generation. 
+- Data_Valid: 
+  Boolean. Set to 1 when input is valid, 0 otherwise. 
+- Delay_Select: 
+  Unsigned size N. Signals will be automatically converted to this size. 
+  Allows the user to select a desired delay for the block. Adjustable at any rate, regardless of Data_In rate. 
+  Always considered valid.
+  
+  A value of zero on this line effectively uses this block as a Zero-order hold until changed. Once set to any non-zero value, 
+  the output of the block will be the valid input from (Delay) samples ago, even if the Data_Valid signal is not asserted. 
+  Any value on this line greater than 2^N-1 will be truncated down to N bits.
+  
+  Note: It is highly recommended to use input signals all of the same clock rate. This will provide the most efficient VHDL code.
+  The Data_Valid signal allows upclocking above the sample rate to support this.
+  
+#### Outputs: 
+Block output descriptions below.
+
+- Data_Out: 
+  Delayed input data. 
