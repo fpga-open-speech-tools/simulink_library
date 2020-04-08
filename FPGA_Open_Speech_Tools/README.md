@@ -273,6 +273,10 @@ Block output descriptions below.
   Signal identifying when the output is a new processed value. Active high. Boolean.
 - RW_Dout:
   Returns the value stored in Wr_Addr, after a 1 System clock cycle delay.
+
+## Circular Buffer, Variable Delay 
+
+=======
   
 ## Variable Delay Block
 A hardware-oriented implementation of a variable delay.
@@ -313,4 +317,3 @@ Block output descriptions below.
 
 - Data_Out: 
   Delayed input data. 
-  
