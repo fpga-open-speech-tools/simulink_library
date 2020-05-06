@@ -1,13 +1,13 @@
 % Define mask inputs
 clear; close all;
-W_bits = 32;                % fixed-point word size
-isSigned = true;            % defines if table input is signed
+W_bits = 29;                % fixed-point word size
+isSigned = false;           % defines if table input is signed
 F_bits = 28;                % fixed-point fractional size
 errorParam = .1;            % allowed absolute error
 ERR_DIAG = true;            % flag to show table init
-IGOTTHIS = false;           % flag to manually define address width
-ADDR_W_MANUAL = 4;          % manually defined address width
-tableFnParam = "sin(xIn)";  % desired function
+IGOTTHIS = true;           % flag to manually define address width
+ADDR_W_MANUAL = 6;          % manually defined address width
+tableFnParam = "log(xIn)";  % desired function
 
 %% LINEAR PLUT INIT SCRIPT
 

@@ -19,14 +19,14 @@
 
 clear; close all;
 % User defined inputs to mask
-tableFnParam = "xIn.^0.5";      % desired function
+tableFnParam = "log(xIn)";      % desired function
 maxInput = 1;                   % highest expected input value
 floorParam = 2^-15;             % low threshold input value
 errorParam = 0.1;               % allowed % error of LUT
 ERR_DIAG = true;                % flag to show table init
-nBitsParam = 4;                 % manual setting of N_bits
-mBitsParam = 5;                 % manual setting of M_bits
-IGOTTHIS = false;               % flag for N/M manual override
+nBitsParam = 3;                 % manual setting of N_bits
+mBitsParam = 3;                 % manual setting of M_bits
+IGOTTHIS = true;               % flag for N/M manual override
 W_bits = 32;                    % fixed-point word size
 F_bits = 28;                    % fixed-point fractional size
 
